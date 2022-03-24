@@ -1,0 +1,22 @@
+FROM golang:1.17-alpine3.15 as debug
+
+# installing git
+RUN apk update && apk upgrade
+
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+
+WORKDIR /go/src/work
+COPY . /go/src/work/
+
+RUN go build -o app
+### Run the Delve debugger ###
+COPY ./dlv.sh /
+RUN chmod +x /dlv.sh 
+ENTRYPOINT [ "/dlv.sh"]
+
+###########START NEW IMAGE###################
+
+FROM alpine:3.9 as prod
+COPY --from=debug /go/src/work/app /
+CMD ./app
